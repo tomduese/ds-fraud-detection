@@ -1,5 +1,12 @@
 import pandas as pd
 from imblearn.over_sampling import SMOTE
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+)
 
 
 def load_data(path):
@@ -41,6 +48,8 @@ def feature_change(cl, inv):
         "consommation_level_4",
         "old_index",
         "new_index",
+        "invoice_date",
+        "creation_date",
     ]
     inv["counter_type"] = inv["counter_type"].map({"ELEC": 1, "GAZ": 0})
     inv["counter_statue"] = inv["counter_statue"].map(
@@ -70,13 +79,12 @@ def feature_change(cl, inv):
         (pd.DatetimeIndex(inv.invoice_date).dayofweek) // 5 == 1
     ).astype(float)
     inv["total_consumption"] = inv["new_index"] - inv["old_index"]
-    inv.drop(drop_cols, inplace=True, axis=1)
     cl.rename(columns={"disrict": "district"}, inplace=True)
 
     # df_client and df_invoice are being merged on the client_id column
     df = pd.merge(cl, inv, on="client_id", how="left")
-    df["client_id"] = df["client_id"].str.slice(start=13).astype(int)
-
+    df["client_id"] = df["client_id"].str.split("_").str[-1].astype(int)
+    df.drop(drop_cols, inplace=True, axis=1)
     return df
 
 
@@ -122,4 +130,12 @@ def get_historical_mean(df):
     df.historical_mean_consumption = df.historical_mean_consumption.fillna(0)
 
     # Check the updated dfframe
-    return df
+    return
+
+
+def print_metrics(y_test, y_pred):
+    print("Accuracy: {:.2f}".format(accuracy_score(y_test, y_pred)))
+    print("Precision: {:.2f}".format(precision_score(y_test, y_pred)))
+    print("Recall: {:.2f}".format(recall_score(y_test, y_pred)))
+    print("F1 Score: {:.2f}".format(f1_score(y_test, y_pred)))
+    print("ROC AUC Score: {:.2f}".format(roc_auc_score(y_test, y_pred)))
