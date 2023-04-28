@@ -17,8 +17,8 @@ import models.eda as eda
 print("loading datasets...")
 client = eda.load_data("data/train/client_train.csv")
 invoice = eda.load_data("data/train/invoice_train.csv")
-train = eda.feature_change(client, invoice)
-train, test = eda.sampling(train)
+df = eda.feature_change(client, invoice)
+train, test = eda.sampling(df)
 
 ## in order to exemplify how the predict will work.. we will save the y_train
 print("Saving test data in the data folder...")
@@ -39,7 +39,7 @@ y_train_pred = logreg.predict(X_train_preprocessed)
 roc_auc_train = eda.roc_auc(y_train, y_train_pred)
 
 print("Training a XGBoost model...")
-# Define XGBoost model with enable_categorical=True and tree_method='hist'
+# Define XGBoost model
 xgb_model = XGBClassifier(
     objective="binary:logistic",
     seed=42,
