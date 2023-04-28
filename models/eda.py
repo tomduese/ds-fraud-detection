@@ -144,7 +144,7 @@ def roc_auc(y_test, y_pred):
     return roc_auc_score(y_test, y_pred)
 
 
-def sampled_train_test_split(df):
+def sampling(df):
     random.seed(42)
     honest = df[df.target == 0]
     fraud = df[df.target == 1]
@@ -152,14 +152,18 @@ def sampled_train_test_split(df):
     honest_id = honest.client_id.unique().tolist()
     fraud_id = fraud.client_id.unique().tolist()
 
+    honest_rate = len(honest_id) / (len(honest_id) + len(fraud_id))
+    fraud_rate = 1 - honest_rate
+
     train_number_of_clients = int(len(fraud_id) * 0.7)
-    test_number_of_clients = len(fraud_id) - train_number_of_clients
+    test_number_of_clients = int((len(fraud_id) - train_number_of_clients) / fraud_rate)
 
     train_honest = random.sample(honest_id, k=train_number_of_clients)
     train_fraud = random.sample(fraud_id, k=train_number_of_clients)
 
     # Get all the items that were not selected in the random sample
     remaining_honest = [item for item in honest_id if item not in train_honest]
+
     test_honest = random.sample(remaining_honest, k=test_number_of_clients)
     test_fraud = [item for item in fraud_id if item not in train_fraud]
 
@@ -170,9 +174,16 @@ def sampled_train_test_split(df):
     df_train = df[df.client_id.isin(train_ids)]
     df_test = df[df.client_id.isin(test_ids)]
 
-    X_train = df_train.drop("target", axis=1)
-    X_test = df_test.drop("target", axis=1)
-    y_train = df_train.target
-    y_test = df_test.target
-
     return df_train, df_test
+
+
+def feature_target_split(df):
+    X = df.drop("target", axis=1)
+    y = df.target
+    return X, y
+
+
+def feature_engineering(df):
+    df = get_mean_consumption(df)
+    df = get_historical_mean(df)
+    return df
